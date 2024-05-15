@@ -1,0 +1,8 @@
+[processes.foo]
+command = "while true; do echo foo; sleep 1; done"
+
+[processes.bar]
+command = "while true; do echo bar; sleep 2; done"
+
+[processes.baz]
+command = "for i in 1 2; do echo baz; sleep 3; done; exit 1"
