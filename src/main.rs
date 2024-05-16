@@ -38,7 +38,6 @@ async fn main() {
 
 async fn run(args: Cli, mut logger: log::Logger) -> anyhow::Result<bool> {
   let config = cfg::Config::load(&args.config_path)?;
-  let cwd = std::env::current_dir()?;
 
   for (name, _) in config.processes.iter() {
     logger.register_name(name);
@@ -55,11 +54,12 @@ async fn run(args: Cli, mut logger: log::Logger) -> anyhow::Result<bool> {
 
     let logger = logger.clone();
     let name = name.clone();
-    let command = process.command.clone();
-    let directory = process.directory.as_ref().unwrap_or(&cwd).clone();
+    let proc_cfg = process.clone();
 
     tasks.spawn(async move {
-      let success = match proc::run(&name, &command, &directory, signal_rx, &logger).await {
+      let res = proc::run(&name, proc_cfg, signal_rx, &logger).await;
+
+      let success = match res {
         Ok(success) => success,
         Err(err) =>{
           logger.log(log::LogRecord::Controller {

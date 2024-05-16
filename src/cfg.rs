@@ -4,15 +4,16 @@ use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
   pub processes: HashMap<String, Process>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Process {
   pub command: String,
   pub directory: Option<PathBuf>,
+  pub shell: Option<String>,
 }
 
 impl Config {

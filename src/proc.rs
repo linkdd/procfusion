@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use tokio_stream::{StreamExt, wrappers::LinesStream};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::sync::mpsc::Receiver;
@@ -9,20 +7,38 @@ use tokio::process::Command;
 use std::process::Stdio;
 
 use crate::log::{Logger, LogRecord, LogStream, ProcessLogRecord, ControllerLogRecord};
+use crate::cfg::Process;
 
-
-pub async fn run<P: AsRef<Path>>(
+pub async fn run(
   name: &str,
-  command: &str,
-  directory: P,
+  proc_cfg:  Process,
   mut signal_rx: Receiver<Signal>,
   logger: &Logger,
 ) -> anyhow::Result<bool> {
-  let mut child = Command::new("/bin/sh").arg("-c").arg(command)
-    .current_dir(directory)
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped())
-    .group_spawn()?;
+  let cwd = std::env::current_dir()?;
+  let directory = proc_cfg.directory.unwrap_or(cwd);
+
+  let mut child = match proc_cfg.shell {
+    Some(sh) => {
+      Command::new(sh).arg("-c").arg(proc_cfg.command)
+        .current_dir(directory)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .group_spawn()?
+    },
+    None => {
+      let parts = shell_words::split(&proc_cfg.command)?;
+      let command = parts.first().expect("not empty command");
+      let args = parts.iter().skip(1).collect::<Vec<_>>();
+
+      Command::new(command)
+        .args(args)
+        .current_dir(directory)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .group_spawn()?
+    },
+  };
 
   let stdout = child.inner().stdout.take().expect("stdout");
   let stderr = child.inner().stderr.take().expect("stderr");
