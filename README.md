@@ -33,6 +33,18 @@ especially if your application is not written in Python.
    other child process, and exits with the exited process's exit code
  - prefix stdout/stderr of each process with a deterministic label
 
+## Comparison
+
+| Feature | ProcFusion | [Supervisord](https://supervisord.org) | [s6-overlay](https://github.com/just-containers/s6-overlay) | [dumb-init](https://github.com/Yelp/dumb-init) |
+| --- | --- | --- | --- | --- |
+| Process Groups | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Forward signals | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Multiple children | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: |
+|  Dependency management | :x: | :x: | :white_check_mark: | :x: |
+| Logs prefixing | :white_check_mark: | :x: | :x: | :x: |
+| Configuration | TOML | INI-like | Service files | Command-line or as shebang |
+| Language (not that it matters) | Rust | Python | Shell | C |
+
 ## Installation
 
 ```
