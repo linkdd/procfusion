@@ -27,7 +27,6 @@ especially if your application is not written in Python.
 ## Features
 
  - start each child process in a process group
- - process commands are wrapped in `/bin/sh -c`
  - if SIGINT/SIGTERM/SIGHUP is sent to *ProcFusion*, it forwards it to each
    child process
  - if a process exits (normally or not), *ProcFusion* sends SIGTERM to every
@@ -50,13 +49,16 @@ Or download the archive from the
 ```toml
 [processes.foo]
 command = "while true; do echo foo; sleep 1; done"
+shell = "/bin/sh"   # Wraps command in '/bin/sh -c'
 directory = "/tmp"  # Optional, defaults to $PWD
 
 [processes.bar]
 command = "while true; do echo bar; sleep 2; done"
+shell = "/bin/sh"
 
 [processes.baz]
 command = "for i in 1 2; do echo baz; sleep 3; done; exit 1"
+shell = "/bin/sh"
 ```
 
 Then run:
