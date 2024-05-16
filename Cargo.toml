@@ -16,3 +16,4 @@ alogfmt = "0.1.0"
 
 command-group = { version = "5.0.1", features = ["with-tokio"] }
 chrono = { version = "0.4.38", features = ["serde"] }
+shell-words = "1.1.0"

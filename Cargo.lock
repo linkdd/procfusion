@@ -484,6 +484,7 @@ dependencies = [
  "clap",
  "command-group",
  "serde",
+ "shell-words",
  "tokio",
  "tokio-stream",
  "toml",
@@ -547,6 +548,12 @@ checksum = "eb3622f419d1296904700073ea6cc23ad690adbd66f13ea683df73298736f0c1"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "shell-words"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
 name = "signal-hook-registry"
