@@ -28,7 +28,7 @@ pub async fn run(
     },
     None => {
       let parts = shell_words::split(&proc_cfg.command)?;
-      let command = parts.first().expect("not empty command");
+      let command = parts.first().ok_or(anyhow!("empty command"))?;
       let args = parts.iter().skip(1).collect::<Vec<_>>();
 
       Command::new(command)
@@ -40,8 +40,8 @@ pub async fn run(
     },
   };
 
-  let stdout = child.inner().stdout.take().expect("stdout");
-  let stderr = child.inner().stderr.take().expect("stderr");
+  let stdout = child.inner().stdout.take().ok_or(anyhow!("could not pipe stdout"))?;
+  let stderr = child.inner().stderr.take().ok_or(anyhow!("could not pipe stderr"))?;
 
   let stdout_reader = BufReader::new(stdout);
   let stderr_reader = BufReader::new(stderr);
@@ -118,7 +118,8 @@ pub async fn run(
         break success;
       }
       sig = signal_rx.recv() => {
-        child.signal(sig.expect("signal channel closed")).unwrap();
+        let sig = sig.ok_or(anyhow!("signal channel closed"))?;
+        child.signal(sig).context("failed to broadcast signal")?;
       }
     }
   };

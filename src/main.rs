@@ -71,7 +71,17 @@ async fn run(args: Cli, mut logger: log::Logger) -> anyhow::Result<bool> {
         },
       };
 
-      exit_tx.send(success).await.unwrap();
+      match exit_tx.send(success).await {
+        Ok(_) => {},
+        Err(_) => {
+          logger.log(log::LogRecord::Controller {
+            stream: log::LogStream::Stderr,
+            record: log::ControllerLogRecord::new("exit channel closed".to_string()),
+          });
+
+          std::process::exit(2);
+        },
+      }
     });
 
     signal_senders.push(signal_tx);
@@ -83,19 +93,47 @@ async fn run(args: Cli, mut logger: log::Logger) -> anyhow::Result<bool> {
     let (signal_tx, mut signal_rx) = channel(1);
 
     tokio::spawn(async move {
-      sig::listen(signal_tx, &logger).await.unwrap();
+      match sig::listen(signal_tx, &logger).await {
+        Ok(_) => {},
+        Err(err) => {
+          logger.log(log::LogRecord::Controller {
+            stream: log::LogStream::Stderr,
+            record: log::ControllerLogRecord::new(err.to_string()),
+          });
+
+          std::process::exit(2);
+        },
+      }
     });
 
     tokio::spawn(async move {
       while let Some(sig) = signal_rx.recv().await {
         for sender in signal_senders.iter() {
-          sender.send(sig).await.expect("signal channel closed");
+          match sender.send(sig).await {
+            Ok(_) => {},
+            Err(_) => {
+              logger.log(log::LogRecord::Controller {
+                stream: log::LogStream::Stderr,
+                record: log::ControllerLogRecord::new("signal channel closed".to_string()),
+              });
+            },
+          }
         }
       }
     });
   }
 
-  let success = exit_rx.recv().await.expect("exit channel closed");
+  let success = match exit_rx.recv().await {
+    Some(success) => success,
+    None => {
+      logger.log(log::LogRecord::Controller {
+        stream: log::LogStream::Stderr,
+        record: log::ControllerLogRecord::new("exit channel closed".to_string()),
+      });
+
+      false
+    },
+  };
 
   for sender in signal_senders.iter() {
     if let Err(_) = sender.send(Signal::SIGTERM).await {
@@ -104,7 +142,12 @@ async fn run(args: Cli, mut logger: log::Logger) -> anyhow::Result<bool> {
   }
 
   while let Some(res) = tasks.join_next().await {
-    res.expect("task panicked");
+    if let Err(err) = res {
+      logger.log(log::LogRecord::Controller {
+        stream: log::LogStream::Stderr,
+        record: log::ControllerLogRecord::new(err.to_string()),
+      });
+    }
   }
 
   Ok(success)
