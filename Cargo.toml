@@ -3,6 +3,9 @@ name = "procfusion"
 version = "0.2.0"
 edition = "2021"
 
+[profile.release]
+panic = "abort"
+
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 anyhow = "1.0.83"
