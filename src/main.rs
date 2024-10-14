@@ -88,15 +88,16 @@ async fn run(args: Cli, mut logger: log::Logger) -> anyhow::Result<bool> {
   }
 
   {
-    let logger = logger.clone();
+    let logger_listener = logger.clone();
+    let logger_broadcaster = logger.clone();
     let signal_senders = signal_senders.clone();
     let (signal_tx, mut signal_rx) = channel(1);
 
     tokio::spawn(async move {
-      match sig::listen(signal_tx, &logger).await {
+      match sig::listen(signal_tx, &logger_listener).await {
         Ok(_) => {},
         Err(err) => {
-          logger.log(log::LogRecord::Controller {
+          logger_listener.log(log::LogRecord::Controller {
             stream: log::LogStream::Stderr,
             record: log::ControllerLogRecord::new(err.to_string()),
           });
@@ -112,7 +113,7 @@ async fn run(args: Cli, mut logger: log::Logger) -> anyhow::Result<bool> {
           match sender.send(sig).await {
             Ok(_) => {},
             Err(_) => {
-              logger.log(log::LogRecord::Controller {
+              logger_broadcaster.log(log::LogRecord::Controller {
                 stream: log::LogStream::Stderr,
                 record: log::ControllerLogRecord::new("signal channel closed".to_string()),
               });
